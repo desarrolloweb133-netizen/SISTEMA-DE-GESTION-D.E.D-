@@ -3,14 +3,16 @@ import { Teacher, AttendanceRecord, ClassEntity, Student, StudentAttendance, Cal
 
 
 // --- SUPABASE CONFIGURATION ---
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (supabaseUrl.includes('placeholder')) {
-  console.error("❌ [CRÍTICO] Las credenciales de Supabase no están llegando al cliente. Verifica VITE_SUPABASE_URL en Vercel.");
+if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder')) {
+  console.error("❌ [CRÍTICO] Las credenciales de Supabase no están configuradas correctamente.");
+  console.error("Asegúrate de configurar VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en Vercel.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Inicializar con la URL proporcionada o una cadena vacía para evitar errores de resolución si no existe
+export const supabase = createClient(supabaseUrl || 'https://missing-url.supabase.co', supabaseKey || 'missing-key');
 
 // --- HELPER: Base64 to Blob ---
 const base64ToBlob = (base64: string): Blob => {
