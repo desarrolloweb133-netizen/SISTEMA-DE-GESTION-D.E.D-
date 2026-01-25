@@ -6,8 +6,8 @@ import { Teacher, AttendanceRecord, ClassEntity, Student, StudentAttendance, Cal
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
 
-if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.error("⚠️ [CONFIGURACIÓN] Faltan las variables de entorno de Supabase en Vercel.");
+if (supabaseUrl.includes('placeholder')) {
+  console.error("❌ [CRÍTICO] Las credenciales de Supabase no están llegando al cliente. Verifica VITE_SUPABASE_URL en Vercel.");
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
