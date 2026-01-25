@@ -1,0 +1,7 @@
+{
+  "name": "Sunday School Attendance",
+  "description": "Facial recognition attendance system for Sunday School teachers.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
