@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Save, GraduationCap, Phone, Info, Tag, Camera, Mail, Briefcase, ChevronRight, Lock, RefreshCw, Copy } from 'lucide-react';
+import { Save, GraduationCap, Phone, Info, Tag, Camera, Mail, Briefcase, ChevronRight, Lock, RefreshCw, Copy, X as CloseIcon } from 'lucide-react';
 import { Teacher, ClassEntity } from '../../types';
 import { getClasses } from '../../services/supabaseClient';
 import { useNotification } from '../../context/NotificationContext';
+import QRCode from 'qrcode';
+import { ShieldCheck } from 'lucide-react';
+import Cropper from 'react-easy-crop';
+import { Area } from 'react-easy-crop';
 
 interface TeacherFormProps {
     onClose: () => void;
@@ -25,8 +29,19 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
         email: '',
         foto_url: '',
         password: '',
-        estado: 'activo'
+        estado: 'activo',
+        qr_code: ''
     });
+
+    const [showQRPreview, setShowQRPreview] = useState(false);
+    const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+    // --- CROPPER STATES ---
+    const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+    const [isCropping, setIsCropping] = useState(false);
 
     useEffect(() => {
         loadClasses();
@@ -35,21 +50,31 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
     useEffect(() => {
         if (editingTeacher) {
             setFormData(editingTeacher);
+            if (editingTeacher.qr_code) {
+                generateQR(editingTeacher.qr_code);
+            }
         } else {
-            setFormData({
-                nombre: '',
-                apellido: '',
-                cedula: '',
-                clase: '',
-                rol: 'docente',
-                telefono: '',
-                email: '',
-                foto_url: '',
-                password: '',
-                estado: 'activo'
-            });
+            const newQC = `DED-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
+            setFormData(prev => ({ ...prev, qr_code: newQC }));
+            generateQR(newQC);
         }
     }, [editingTeacher]);
+
+    const generateQR = async (text: string) => {
+        try {
+            const url = await QRCode.toDataURL(text, {
+                width: 400,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            });
+            setQrDataUrl(url);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     const loadClasses = async () => {
         const data = await getClasses();
@@ -66,15 +91,58 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setFormData({ ...formData, foto_url: reader.result as string });
+                setImageToCrop(reader.result as string);
+                setIsCropping(true);
             };
             reader.readAsDataURL(file);
         }
     };
 
+    const onCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    };
+
+    const showCroppedImage = async () => {
+        try {
+            if (!imageToCrop || !croppedAreaPixels) return;
+
+            const canvas = document.createElement('canvas');
+            const img = new Image();
+            img.src = imageToCrop;
+
+            await new Promise((resolve) => { img.onload = resolve; });
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            canvas.width = croppedAreaPixels.width;
+            canvas.height = croppedAreaPixels.height;
+
+            ctx.drawImage(
+                img,
+                croppedAreaPixels.x,
+                croppedAreaPixels.y,
+                croppedAreaPixels.width,
+                croppedAreaPixels.height,
+                0,
+                0,
+                croppedAreaPixels.width,
+                croppedAreaPixels.height
+            );
+
+            const base64Image = canvas.toDataURL('image/jpeg');
+            setFormData({ ...formData, foto_url: base64Image });
+            setIsCropping(false);
+            setImageToCrop(null);
+        } catch (e) {
+            console.error(e);
+            showNotification('Error al recortar la imagen', 'error');
+        }
+    };
+
     return (
-        <div className="max-w-[1100px] mx-auto animate-fade-in">
-            {/* Breadcrumb Area - Compact */}
+        <div className="max-w-[1100px] mx-auto animate-fade-in mb-20">
+            {/* Breadcrumb Area - Dynamic */}
             <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
                 <span className="cursor-pointer hover:text-premium-purple" onClick={onClose}>Cuerpo Docente</span>
                 <ChevronRight size={10} />
@@ -115,30 +183,136 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
                                 {/* Photo + Identity Block - Compact */}
                                 <div className="flex gap-4 items-center">
                                     <div className="relative group shrink-0">
-                                        <div className="w-20 h-20 rounded-2xl border-2 border-gray-50 shadow-lg overflow-hidden bg-gray-100 flex items-center justify-center transition-all group-hover:scale-105 duration-300">
+                                        <div className="w-20 h-20 rounded-2xl border-2 border-gray-50 shadow-lg overflow-hidden bg-gray-100 flex items-center justify-center transition-all group-hover:scale-105 duration-300 relative">
                                             {formData.foto_url ? (
                                                 <img src={formData.foto_url} alt="Preview" className="w-full h-full object-cover" />
                                             ) : (
                                                 <GraduationCap size={32} className="text-gray-300" />
                                             )}
+
+                                            <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white">
+                                                <Camera size={18} />
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={handlePhotoChange}
+                                                />
+                                            </label>
                                         </div>
-                                        <label className="absolute -bottom-1 -right-1 p-2 bg-logo-blue text-white rounded-xl cursor-pointer shadow-lg border-2 border-white hover:scale-110 transition-transform">
-                                            <Camera size={12} />
-                                            <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
-                                        </label>
                                     </div>
-                                    <div className="flex-1">
+
+                                    <div className="flex-1 space-y-2">
                                         <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Cédula / Identificación</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            className="w-full px-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-logo-blue/20 focus:bg-white outline-none transition-all font-bold text-sm text-gray-600 shadow-inner"
-                                            placeholder="Cédula / ID..."
-                                            value={formData.cedula}
-                                            onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                required
+                                                className="flex-1 px-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-logo-blue/20 focus:bg-white outline-none transition-all font-bold text-sm text-gray-600 shadow-inner"
+                                                placeholder="Cédula / ID..."
+                                                value={formData.cedula}
+                                                onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowQRPreview(!showQRPreview)}
+                                                className={`px-3 rounded-xl flex items-center justify-center gap-2 border-2 transition-all ${qrDataUrl ? 'bg-blue-50 border-blue-200 text-logo-blue' : 'bg-gray-50 border-gray-200 text-gray-400'}`}
+                                                title="Ver Código QR"
+                                            >
+                                                <ShieldCheck size={16} />
+                                                <span className="text-[10px] font-black uppercase">
+                                                    QR
+                                                </span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
+
+                                {/* Integrated Cropper Section - Light & Modern */}
+                                {isCropping && imageToCrop && (
+                                    <div className="bg-blue-50/40 rounded-[2.5rem] border-2 border-white shadow-xl shadow-blue-500/5 p-6 animate-fade-in relative overflow-hidden">
+                                        {/* Background Decor */}
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+
+                                        <div className="relative z-10">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div>
+                                                    <h4 className="text-[11px] font-black text-[#414042] uppercase tracking-widest">Encuadre de Fotografía</h4>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ajusta la imagen para el perfil oficial</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setIsCropping(false); setImageToCrop(null); }}
+                                                    className="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-sm hover:bg-red-50 hover:text-red-500 transition-all text-gray-400"
+                                                >
+                                                    <CloseIcon size={16} />
+                                                </button>
+                                            </div>
+
+                                            <div className="relative h-72 bg-gray-50 rounded-3xl overflow-hidden border border-white shadow-inner">
+                                                <Cropper
+                                                    image={imageToCrop}
+                                                    crop={crop}
+                                                    zoom={zoom}
+                                                    aspect={1 / 1}
+                                                    onCropChange={setCrop}
+                                                    onCropComplete={onCropComplete}
+                                                    onZoomChange={setZoom}
+                                                    classes={{
+                                                        containerClassName: "rounded-3xl",
+                                                        mediaClassName: "rounded-3xl"
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="mt-6 flex flex-col gap-6">
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                                        <span>Zoom de Imagen</span>
+                                                        <span className="text-logo-blue">{Math.round(zoom * 100)}%</span>
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        value={zoom}
+                                                        min={1}
+                                                        max={3}
+                                                        step={0.1}
+                                                        onChange={(e) => setZoom(Number(e.target.value))}
+                                                        className="w-full h-1.5 bg-white rounded-lg appearance-none cursor-pointer accent-logo-blue border border-gray-100"
+                                                    />
+                                                </div>
+
+                                                <div className="flex gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={showCroppedImage}
+                                                        className="flex-1 py-4 bg-logo-blue text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all active:scale-95"
+                                                    >
+                                                        Aplicar Recorte Final
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* QR Preview Area */}
+                                {showQRPreview && qrDataUrl && (
+                                    <div className="bg-blue-50/50 p-4 rounded-3xl border border-blue-100 animate-fade-in flex flex-col items-center">
+                                        <div className="bg-white p-4 rounded-2xl shadow-sm mb-3">
+                                            <img src={qrDataUrl} alt="QR Code" className="w-32 h-32" />
+                                        </div>
+                                        <p className="text-[9px] font-black text-logo-blue uppercase tracking-widest mb-3">Identificador: {formData.qr_code}</p>
+                                        <a
+                                            href={qrDataUrl}
+                                            download={`QR_${formData.nombre}_${formData.apellido}.png`}
+                                            className="px-4 py-2 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md flex items-center gap-2"
+                                        >
+                                            <Copy size={12} />
+                                            Descargar Credencial QR
+                                        </a>
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>

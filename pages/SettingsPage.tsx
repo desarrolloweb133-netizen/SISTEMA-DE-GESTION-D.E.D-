@@ -58,7 +58,7 @@ export const SettingsPage: React.FC = () => {
             {/* Settings Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {sections.map((section, idx) => (
-                    <div key={idx} className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                    <div key={idx} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
                         <div className={`p-6 border-b border-gray-50 flex items-center gap-4 ${section.bg}`}>
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm ${section.color}`}>
                                 <section.icon size={24} />
@@ -99,7 +99,7 @@ export const SettingsPage: React.FC = () => {
                 ))}
 
                 {/* System Info Card */}
-                <div className="bg-gradient-to-br from-[#414042] to-[#2D2D2E] rounded-[2.5rem] p-8 text-white flex flex-col justify-between shadow-xl shadow-gray-200">
+                <div className="bg-gradient-to-br from-[#414042] to-[#2D2D2E] rounded-3xl p-8 text-white flex flex-col justify-between shadow-xl shadow-gray-200">
                     <div>
                         <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md mb-6 border border-white/20">
                             <Database size={28} />

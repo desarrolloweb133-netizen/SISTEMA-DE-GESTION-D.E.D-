@@ -6,12 +6,13 @@ import { NotificationPanel } from '../notifications/NotificationPanel';
 import { getUnreadNotificationsCount } from '../../services/supabaseClient';
 
 
+import { useNavigate, useLocation } from 'react-router-dom';
+
+
 interface LayoutProps {
     children: React.ReactNode;
     user: { email: string; role: string } | null;
     onLogout: () => void;
-    activeView: string;
-    onNavigate: (view: string) => void;
     searchQuery: string;
     onSearchChange: (value: string) => void;
 }
@@ -20,11 +21,13 @@ export const Layout: React.FC<LayoutProps> = ({
     children,
     user,
     onLogout,
-    activeView,
-    onNavigate,
     searchQuery,
     onSearchChange
 }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const activeView = location.pathname.split('/')[2] || 'inicio';
+
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -34,7 +37,11 @@ export const Layout: React.FC<LayoutProps> = ({
     // Close sidebar on navigation (mobile)
     useEffect(() => {
         setSidebarOpen(false);
-    }, [activeView]);
+    }, [location.pathname]);
+
+    const handleNavigate = (view: string) => {
+        navigate(`/admin/${view}`);
+    };
 
     // Listen for logout request from sidebar
     useEffect(() => {
@@ -76,7 +83,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className={`fixed inset-y-0 left-0 z-[70] transform lg:translate-x-0 transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}>
                 <Sidebar
                     activeView={activeView}
-                    onNavigate={onNavigate}
+                    onNavigate={handleNavigate}
                     collapsed={sidebarCollapsed}
                     onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
                     onCloseMobile={() => setSidebarOpen(false)}

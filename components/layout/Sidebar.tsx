@@ -31,13 +31,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onCloseMobile
 }) => {
     const menuItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'students', label: 'Alumnos', icon: Users },
-        { id: 'teachers', label: 'Docentes', icon: GraduationCap },
-        { id: 'attendance', label: 'Asistencia', icon: ClipboardCheck },
-        { id: 'reports', label: 'Reportes', icon: BarChart3 },
-        { id: 'calendar', label: 'Calendario', icon: Calendar },
-        { id: 'settings', label: 'Configuración', icon: Settings },
+        { id: 'inicio', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'alumnos', label: 'Alumnos', icon: Users },
+        { id: 'docentes', label: 'Docentes', icon: GraduationCap },
+        { id: 'asistencia', label: 'Asistencia', icon: ClipboardCheck },
+        { id: 'reportes', label: 'Reportes', icon: BarChart3 },
+        { id: 'calendario', label: 'Calendario', icon: Calendar },
+        { id: 'config', label: 'Configuración', icon: Settings },
     ];
 
     const handleLogoutClick = () => {

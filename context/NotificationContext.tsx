@@ -53,7 +53,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         setTimeout(() => {
             setShowSuccess(false);
             setSuccessMessage('');
-        }, 2200);
+        }, 2000);
     }, []);
 
     return (

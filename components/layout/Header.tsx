@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout, onOpenSidebar, a
                     <h1 className="text-xl font-extrabold text-[#414042] hidden sm:block">PEDERCENT</h1>
                 </div>
 
-                {activeView === 'dashboard' && (
+                {activeView === 'inicio' && (
                     <div className="hidden md:flex items-center flex-1 max-w-md">
                         <div className="relative w-full group">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-[#00ADEF] transition-colors" />

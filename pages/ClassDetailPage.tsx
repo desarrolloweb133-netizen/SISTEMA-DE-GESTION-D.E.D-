@@ -72,7 +72,7 @@ export const ClassDetailPage: React.FC<ClassDetailPageProps> = ({ onDataChange }
                 setStudents(studentsResult);
             } else {
                 console.error("Class not found", classId);
-                navigate('/dashboard');
+                navigate('/admin/inicio');
             }
         } catch (error) {
             console.error('Error loading class detail:', error);
@@ -160,7 +160,7 @@ export const ClassDetailPage: React.FC<ClassDetailPageProps> = ({ onDataChange }
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                 <div className="flex items-center gap-6">
                     <button
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate('/admin/inicio')}
                         className="w-12 h-12 flex items-center justify-center bg-white border border-gray-100 rounded-2xl hover:bg-gray-50 transition-all shadow-sm text-[#00ADEF] group"
                     >
                         <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />

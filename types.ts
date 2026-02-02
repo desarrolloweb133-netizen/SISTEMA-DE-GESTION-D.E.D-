@@ -33,12 +33,13 @@ export interface Teacher {
   apellido: string;
   cedula: string;
   clase?: string;
-  foto_url: string;
+  foto_url?: string;
   estado: 'activo' | 'inactivo';
   rol: 'docente' | 'coordinador' | 'administrador';
   telefono?: string;
   email?: string;
   password?: string;
+  qr_code?: string; // Unique identifier for QR attendance
   created_at: string;
   updated_at?: string;
 }

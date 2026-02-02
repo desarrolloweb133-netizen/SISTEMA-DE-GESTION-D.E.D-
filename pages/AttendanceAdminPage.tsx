@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, ClipboardCheck, Monitor, Smartphone, ShieldCheck, ArrowRight, BookOpen, Calendar, Search, ChevronRight, Info, Save, Clock } from 'lucide-react';
+import { ExternalLink, ClipboardCheck, Monitor, Smartphone, ShieldCheck, ArrowRight, BookOpen, Calendar, Search, ChevronRight, Clock } from 'lucide-react';
 import { PremiumDatePicker } from '../components/common/PremiumDatePicker';
-import { ClassEntity, StudentAttendance, Student, CalendarEvent } from '../types';
+import { ClassEntity, CalendarEvent } from '../types';
 import { getClasses, getStudentAttendanceByClassAndDate, getStudentsByClass, getAttendanceEvents, updateEventStatus, addCalendarEvent, updateCalendarEvent } from '../services/supabaseClient';
 import { AttendanceSessionForm } from '../components/dashboard/AttendanceSessionForm';
+import { useNotification } from '../context/NotificationContext';
 
 export const AttendanceAdminPage: React.FC = () => {
+    const { showNotification } = useNotification();
     const checkInUrl = `${window.location.origin}/check-in`;
     const [activeTab, setActiveTab] = useState<'terminal' | 'students' | 'sessions'>('terminal');
 
@@ -37,8 +39,6 @@ export const AttendanceAdminPage: React.FC = () => {
         setLoading(true);
         try {
             const statuses: Record<string, 'pendiente' | 'listo'> = {};
-            // For each class, check if there's at least one 'presente' or 'ausente' record for that date
-            // This is a bit heavy, but without a dedicated 'status' table, we check attendance_alumnos
             for (const cls of classes) {
                 const att = await getStudentAttendanceByClassAndDate(cls.id, date);
                 statuses[cls.id] = att.length > 0 ? 'listo' : 'pendiente';
@@ -115,18 +115,10 @@ export const AttendanceAdminPage: React.FC = () => {
             loadSessions();
         } catch (error) {
             console.error('Error saving session:', error);
-            // We can't use showNotification here unless we import context, 
-            // but for now let's alert or use standard error handling if context is available.
-            // AttendanceAdminPage doesn't seem to have useNotification. Let's add it.
-            alert(
-                '❌ No se pudo guardar el evento\n\n' +
-                'Ocurrió un problema al registrar el evento. Verifica que todos los campos estén completos correctamente e inténtalo nuevamente.\n\n' +
-                'Si el problema persiste, contacta al administrador del sistema.'
-            );
+            showNotification('Error al guardar la sesión. Verifica los datos.', 'error');
         }
     };
 
-    // Auto load when filters change? Or manual button? Manual is better for UX sometimes, or auto. Let's do auto on effect.
     useEffect(() => {
         if (activeTab === 'students') {
             if (viewMode === 'classes') {
@@ -181,8 +173,8 @@ export const AttendanceAdminPage: React.FC = () => {
             {activeTab === 'terminal' ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in-up">
                     {/* Left Side: Gateway Card */}
-                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-10 flex flex-col items-center text-center group hover:shadow-xl transition-all duration-500">
-                        <div className="w-24 h-24 bg-[#00ADEF]/10 rounded-[2rem] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-10 flex flex-col items-center text-center group hover:shadow-xl transition-all duration-500">
+                        <div className="w-24 h-24 bg-[#00ADEF]/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500">
                             <ClipboardCheck size={48} className="text-[#00ADEF]" />
                         </div>
 
@@ -191,7 +183,7 @@ export const AttendanceAdminPage: React.FC = () => {
                             Accede a la interface de registro facial diseñada para ser utilizada en tablets o computadoras en la entrada.
                         </p>
 
-                        <div className="w-full bg-gray-50 p-6 rounded-3xl mb-8 border border-gray-100 flex items-center justify-between gap-4">
+                        <div className="w-full bg-gray-50 p-6 rounded-2xl mb-8 border border-gray-100 flex items-center justify-between gap-4">
                             <div className="text-left overflow-hidden">
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Enlace de Registro</p>
                                 <p className="text-sm font-bold text-[#00ADEF] truncate">{checkInUrl}</p>
@@ -200,7 +192,7 @@ export const AttendanceAdminPage: React.FC = () => {
                                 onClick={() => {
                                     navigator.clipboard.writeText(checkInUrl);
                                 }}
-                                className="p-3 bg-white hover:bg-[#00ADEF] hover:text-white rounded-2xl transition-all shadow-sm border border-gray-100 shrink-0"
+                                className="p-3 bg-white hover:bg-[#00ADEF] hover:text-white rounded-xl transition-all shadow-sm border border-gray-100 shrink-0"
                                 title="Copiar enlace"
                             >
                                 <ExternalLink size={18} />
@@ -209,7 +201,7 @@ export const AttendanceAdminPage: React.FC = () => {
 
                         <button
                             onClick={openTerminal}
-                            className="w-full flex items-center justify-center gap-3 bg-[#D9DF21] text-[#414042] py-5 rounded-[1.5rem] hover:bg-[#C4CB1D] transition-all shadow-lg shadow-yellow-500/10 font-black text-lg group/btn"
+                            className="w-full flex items-center justify-center gap-3 bg-[#D9DF21] text-[#414042] py-5 rounded-2xl hover:bg-[#C4CB1D] transition-all shadow-lg shadow-yellow-500/10 font-black text-lg group/btn"
                         >
                             Abrir Terminal Ahora
                             <ArrowRight className="group-hover/btn:translate-x-1 transition-transform" />
@@ -218,7 +210,7 @@ export const AttendanceAdminPage: React.FC = () => {
 
                     {/* Right Side: Info & Features */}
                     <div className="space-y-6">
-                        <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm">
+                        <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
                             <h3 className="text-xl font-black text-[#414042] mb-6 flex items-center gap-3">
                                 <ShieldCheck className="text-[#00ADEF]" />
                                 Características del Sistema
@@ -255,7 +247,7 @@ export const AttendanceAdminPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="bg-[#414042] rounded-[2rem] p-8 text-white relative overflow-hidden group">
+                        <div className="bg-[#414042] rounded-2xl p-8 text-white relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-2xl rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
                             <h4 className="text-lg font-black mb-2 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-[#D9DF21] animate-pulse"></span>
@@ -282,19 +274,19 @@ export const AttendanceAdminPage: React.FC = () => {
                                 </button>
                             </div>
 
-                            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full">
-                                        <thead className="bg-gray-50/50 border-b border-gray-100">
+                                        <thead className="bg-gray-50/80 border-b border-gray-100">
                                             <tr>
-                                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Sesión</th>
-                                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Clase / Grupo</th>
-                                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha y Hora</th>
-                                                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Estado</th>
-                                                <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acciones</th>
+                                                <th className="px-6 py-4 text-left text-[10px] font-black text-[#414042] uppercase tracking-widest">Sesión</th>
+                                                <th className="px-6 py-4 text-left text-[10px] font-black text-[#414042] uppercase tracking-widest">Clase / Grupo</th>
+                                                <th className="px-6 py-4 text-left text-[10px] font-black text-[#414042] uppercase tracking-widest">Fecha y Hora</th>
+                                                <th className="px-6 py-4 text-center text-[10px] font-black text-[#414042] uppercase tracking-widest">Estado</th>
+                                                <th className="px-6 py-4 text-right text-[10px] font-black text-[#414042] uppercase tracking-widest">Acciones</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-50">
+                                        <tbody className="divide-y divide-gray-100">
                                             {sessionsLoading ? (
                                                 <tr>
                                                     <td colSpan={5} className="px-6 py-12 text-center text-gray-400 font-bold">Cargando sesiones...</td>
@@ -381,8 +373,7 @@ export const AttendanceAdminPage: React.FC = () => {
                 </div>
             ) : (
                 <div className="space-y-6 animate-fade-in-up">
-                    {/* Filters Toolbar - Always visible or context-dependent? 
-                        Let's keep date picker always visible. */}
+                    {/* Filters Toolbar */}
                     <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
                         <PremiumDatePicker
                             value={selectedDate}
@@ -406,35 +397,60 @@ export const AttendanceAdminPage: React.FC = () => {
                     </div>
 
                     {viewMode === 'classes' ? (
-                        /* GRID VIEW: All Classes with Status */
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {classes.map(cls => {
-                                const status = classStatuses[cls.id] || 'pendiente';
-                                return (
-                                    <div
-                                        key={cls.id}
-                                        onClick={() => {
-                                            setSelectedClassId(cls.id);
-                                            setViewMode('detail');
-                                        }}
-                                        className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer group"
-                                    >
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-logo-blue transition-colors">
-                                                <BookOpen size={24} />
-                                            </div>
-                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5
-                                                ${status === 'listo' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}
-                                            `}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${status === 'listo' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
-                                                {status === 'listo' ? 'Listo' : 'Pendiente'}
-                                            </span>
-                                        </div>
-                                        <h4 className="text-xl font-black text-[#414042] mb-1">{cls.nombre}</h4>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{cls.rango_edad || 'Sin rango edad'}</p>
-                                    </div>
-                                );
-                            })}
+                        /* LIST VIEW: All Classes with Status */
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead className="bg-gray-50/80 border-b border-gray-100">
+                                        <tr>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Clase</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Rango de Edad</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Estado</th>
+                                            <th className="px-8 py-5 text-right text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {classes.map(cls => {
+                                            const status = classStatuses[cls.id] || 'pendiente';
+                                            return (
+                                                <tr
+                                                    key={cls.id}
+                                                    onClick={() => {
+                                                        setSelectedClassId(cls.id);
+                                                        setViewMode('detail');
+                                                    }}
+                                                    className="hover:bg-blue-50/50 transition-all group relative border-l-4 border-transparent hover:border-[#00ADEF] cursor-pointer"
+                                                >
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:text-logo-blue transition-colors">
+                                                                <BookOpen size={20} />
+                                                            </div>
+                                                            <span className="text-lg font-black text-[#414042]">{cls.nombre}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{cls.rango_edad || 'Sin rango edad'}</span>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 w-fit
+                                                            ${status === 'listo' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600 border border-yellow-200'}
+                                                        `}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${status === 'listo' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
+                                                            {status === 'listo' ? 'Listo' : 'Pendiente'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-right">
+                                                        <button className="p-2 text-gray-400 hover:text-logo-blue hover:bg-blue-50 rounded-xl transition-all">
+                                                            <ArrowRight size={18} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     ) : (
                         /* DETAIL VIEW: Students list with Summary Stats */
@@ -455,42 +471,42 @@ export const AttendanceAdminPage: React.FC = () => {
                             </div>
 
                             {/* Table */}
-                            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="bg-gray-50/50 border-b border-gray-100">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-gray-50/80 border-b border-gray-100">
                                             <tr>
-                                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Alumno</th>
-                                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Estado</th>
-                                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Hora Reg.</th>
+                                                <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Alumno</th>
+                                                <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Estado</th>
+                                                <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Hora Reg.</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-50">
+                                        <tbody className="divide-y divide-gray-100">
                                             {loading ? (
                                                 <tr>
-                                                    <td colSpan={3} className="px-6 py-12 text-center text-gray-400 font-medium">
+                                                    <td colSpan={3} className="px-8 py-12 text-center text-gray-400 font-medium italic">
                                                         Cargando asistencia...
                                                     </td>
                                                 </tr>
                                             ) : attendanceData.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={3} className="px-6 py-12 text-center text-gray-400 font-medium">
+                                                    <td colSpan={3} className="px-8 py-12 text-center text-gray-400 font-medium italic">
                                                         No hay alumnos registrados en esta clase.
                                                     </td>
                                                 </tr>
                                             ) : (
                                                 attendanceData.map((record) => (
-                                                    <tr key={record.id} className="hover:bg-gray-50/50 transition-colors">
-                                                        <td className="px-6 py-4">
+                                                    <tr key={record.id} className="hover:bg-gray-50/50 transition-colors group relative border-l-4 border-transparent hover:border-gray-300">
+                                                        <td className="px-8 py-6">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-xs text-gray-400 uppercase">
+                                                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-black text-xs text-gray-400 uppercase">
                                                                     {record.nombre.substring(0, 2)}
                                                                 </div>
-                                                                <span className="font-bold text-sm text-gray-700">{record.nombre}</span>
+                                                                <span className="font-bold text-[#414042]">{record.nombre}</span>
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold capitalize
+                                                        <td className="px-8 py-6">
+                                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest
                                                                 ${record.status === 'presente' ? 'bg-green-100 text-green-700' :
                                                                     record.status === 'ausente' ? 'bg-red-100 text-red-700' :
                                                                         record.status === 'tarde' ? 'bg-yellow-100 text-yellow-700' :
@@ -498,10 +514,10 @@ export const AttendanceAdminPage: React.FC = () => {
                                                                                 'bg-gray-100 text-gray-400'
                                                                 }
                                                             `}>
-                                                                {record.status === 'no_registrado' ? 'No Registrado' : record.status}
+                                                                {record.status === 'no_registrado' ? 'Sin Registro' : record.status}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-sm font-medium text-gray-500">
+                                                        <td className="px-8 py-6 text-sm font-black text-gray-400">
                                                             {record.time}
                                                         </td>
                                                     </tr>

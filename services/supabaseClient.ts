@@ -45,7 +45,7 @@ const handleDatabaseError = (error: any, context: string) => {
       `1. Ve al SQL Editor en Supabase.\n` +
       `2. Ejecuta este código para crear TODAS las tablas:\n\n` +
       `CREATE TABLE IF NOT EXISTS public.clases ( id UUID DEFAULT gen_random_uuid() PRIMARY KEY, nombre TEXT NOT NULL, rango_edad TEXT, aula TEXT, horario TEXT, color TEXT DEFAULT '#3B82F6', imagen_url TEXT, estado TEXT DEFAULT 'activa', created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now() );\n` +
-      `CREATE TABLE IF NOT EXISTS public.docentes ( id UUID DEFAULT gen_random_uuid() PRIMARY KEY, nombre TEXT, apellido TEXT, cedula TEXT, clase TEXT, foto_url TEXT, estado TEXT DEFAULT 'activo', rol TEXT DEFAULT 'docente', telefono TEXT, email TEXT, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now() );\n` +
+      `CREATE TABLE IF NOT EXISTS public.docentes ( id UUID DEFAULT gen_random_uuid() PRIMARY KEY, nombre TEXT, apellido TEXT, cedula TEXT, clase TEXT, foto_url TEXT, qr_code TEXT, estado TEXT DEFAULT 'activo', rol TEXT DEFAULT 'docente', telefono TEXT, email TEXT, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now() );\n` +
       `CREATE TABLE IF NOT EXISTS public.asistencias ( id UUID DEFAULT gen_random_uuid() PRIMARY KEY, docente_id UUID REFERENCES public.docentes(id), fecha DATE, hora TEXT, created_at TIMESTAMPTZ DEFAULT now() );\n` +
       `ALTER TABLE public.docentes ENABLE ROW LEVEL SECURITY; ALTER TABLE public.asistencias ENABLE ROW LEVEL SECURITY; ALTER TABLE public.clases ENABLE ROW LEVEL SECURITY;\n` +
       `CREATE POLICY "Public Access D" ON public.docentes FOR ALL USING (true) WITH CHECK (true);\n` +
@@ -298,7 +298,7 @@ export const addTeacher = async (teacher: Omit<Teacher, 'id' | 'created_at' | 'e
   try {
     let publicUrl = teacher.foto_url;
 
-    if (teacher.foto_url.startsWith('data:')) {
+    if (teacher.foto_url && teacher.foto_url.startsWith('data:')) {
       publicUrl = await uploadImageToBucket(teacher.foto_url);
     }
 
@@ -465,22 +465,8 @@ export const updateCalendarEvent = async (id: string, updates: Partial<CalendarE
   if (error) throw error;
 };
 
-export const simulateFaceMatch = async (imageSrc: string): Promise<Teacher | null> => {
-  const { data: teachers, error } = await supabase
-    .from('docentes')
-    .select('*')
-    .eq('estado', 'activo');
-
-  if (error || !teachers || teachers.length === 0) return null;
-
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  const isMatch = Math.random() > 0.2;
-  if (isMatch) {
-    const randomTeacher = teachers[Math.floor(Math.random() * teachers.length)];
-    return randomTeacher as Teacher;
-  }
-  return null;
-};
+// --- QR METHODS ---
+// These are handled within addTeacher and CheckInPage using the qr_code string
 
 // --- EVENT METHODS ---
 

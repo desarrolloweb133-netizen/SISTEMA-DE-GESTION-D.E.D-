@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, ShieldCheck, Clock, CheckCircle, Smartphone } from 'lucide-react';
+import { User, ShieldCheck, Clock, CheckCircle } from 'lucide-react';
 import { Teacher } from '../types';
 import { GET_DED_LOGO } from '../constants/assets';
 
@@ -125,7 +125,7 @@ export const CheckInSuccessView: React.FC<CheckInSuccessViewProps> = ({ teacher 
                     to { width: 100%; }
                 }
                 .animate-progress-timer {
-                    animation: progress-timer 6s linear forwards;
+                    animation: progress-timer 4s linear forwards;
                 }
                 .animate-pulse-slow {
                     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;

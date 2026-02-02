@@ -3,6 +3,7 @@ import { Save, GraduationCap, Phone, Info, Trash2, Camera, UserPlus, X, AlertTri
 import { ClassEntity, Teacher } from '../../types';
 import { getTeachers, updateTeacher, updateClass, deleteClass } from '../../services/supabaseClient';
 import { useNotification } from '../../context/NotificationContext';
+import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface ClassSettingsProps {
     classData: ClassEntity;
@@ -28,6 +29,10 @@ export const ClassSettings: React.FC<ClassSettingsProps> = ({ classData, onUpdat
 
     // Danger Zone State
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    // Remove Teacher State
+    const [isRemoveTeacherModalOpen, setIsRemoveTeacherModalOpen] = useState(false);
+    const [teacherToRemove, setTeacherToRemove] = useState<string | null>(null);
 
     useEffect(() => {
         loadTeachers();
@@ -64,15 +69,23 @@ export const ClassSettings: React.FC<ClassSettingsProps> = ({ classData, onUpdat
         }
     };
 
-    const handleRemoveTeacher = async (teacherId: string) => {
-        if (!window.confirm('¿Seguro de remover este docente de la clase?')) return;
+    const handleRemoveTeacherClick = (teacherId: string) => {
+        setTeacherToRemove(teacherId);
+        setIsRemoveTeacherModalOpen(true);
+    };
+
+    const confirmRemoveTeacher = async () => {
+        if (!teacherToRemove) return;
         try {
-            await updateTeacher(teacherId, { clase: '' });
+            await updateTeacher(teacherToRemove, { clase: '' });
             showNotification('Docente removido de la clase', 'success');
             loadTeachers();
         } catch (error) {
             console.error('Error removing teacher:', error);
             showNotification('Error al remover docente', 'error');
+        } finally {
+            setIsRemoveTeacherModalOpen(false);
+            setTeacherToRemove(null);
         }
     };
 
@@ -308,7 +321,7 @@ export const ClassSettings: React.FC<ClassSettingsProps> = ({ classData, onUpdat
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => handleRemoveTeacher(teacher.id)}
+                                        onClick={() => handleRemoveTeacherClick(teacher.id)}
                                         className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                                         title="Remover de la clase"
                                     >
@@ -362,6 +375,17 @@ export const ClassSettings: React.FC<ClassSettingsProps> = ({ classData, onUpdat
                     </div>
                 </div>
             </section>
+
+            <ConfirmModal
+                isOpen={isRemoveTeacherModalOpen}
+                onClose={() => setIsRemoveTeacherModalOpen(false)}
+                onConfirm={confirmRemoveTeacher}
+                title="Remover Docente"
+                message="¿Estás seguro de que deseas remover a este docente de la clase?"
+                confirmText="Sí, Remover"
+                cancelText="Cancelar"
+                isDestructive={true}
+            />
 
         </div>
     );

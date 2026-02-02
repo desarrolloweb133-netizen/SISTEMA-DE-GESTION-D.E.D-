@@ -118,7 +118,7 @@ export const CalendarPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 xl:gap-6">
                 {/* Main Calendar Section */}
                 <div className="lg:col-span-3">
-                    <div className="bg-white p-4 sm:p-6 rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden relative min-h-[550px]">
+                    <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative min-h-[550px]">
                         {/* Internal Header (Current Month) */}
                         <div className="flex items-center gap-3 mb-4">
                             <button
@@ -193,7 +193,7 @@ export const CalendarPage: React.FC = () => {
 
                         {/* Event Selection Popover / List (Visualizar eventos registrados) */}
                         {selectedDate && !editingEvent && view === 'list' && events.filter(e => isSameDay(new Date(e.fecha_inicio), selectedDate)).length > 0 && (
-                            <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex flex-col p-8 animate-in fade-in zoom-in-95 duration-300 rounded-[2rem]">
+                            <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex flex-col p-8 animate-in fade-in zoom-in-95 duration-300 rounded-3xl">
                                 <div className="flex justify-between items-center mb-6">
                                     <div>
                                         <h3 className="text-2xl font-black text-[#414042]">Eventos para el {format(selectedDate, 'd MMMM', { locale: es })}</h3>
@@ -253,7 +253,7 @@ export const CalendarPage: React.FC = () => {
                 {/* Sidebar Info Section */}
                 <div className="space-y-4 xl:space-y-6">
                     {/* Next Events Card */}
-                    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col min-h-[400px]">
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col min-h-[400px]">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-[#00ADEF] shadow-sm">
                                 <Clock size={20} />
@@ -315,7 +315,7 @@ export const CalendarPage: React.FC = () => {
                     </div>
 
                     {/* Summary Banner */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-[#414042] to-[#2D2D2E] p-6 rounded-[2rem] shadow-xl shadow-gray-100 text-white group">
+                    <div className="relative overflow-hidden bg-gradient-to-br from-[#414042] to-[#2D2D2E] p-6 rounded-3xl shadow-xl shadow-gray-100 text-white group">
                         <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
                         <h3 className="font-black text-lg mb-1 relative z-10 tracking-tight">Resumen Global</h3>
                         <p className="text-white/60 text-xs mb-4 font-medium relative z-10 leading-tight">Total de {events.length} eventos registrados en el sistema central.</p>

@@ -83,7 +83,7 @@ export const ReportsPage: React.FC = () => {
                     { label: 'Zonas de Alerta', value: 'Primarios', icon: AlertTriangle, color: '#BE1E2D', bg: 'rgba(190, 30, 45, 0.08)' },
                     { label: 'Asistencia Global', value: '94%', icon: BarChart3, color: '#414042', bg: 'rgba(65, 64, 66, 0.08)' }
                 ].map((stat, i) => (
-                    <div key={i} className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex items-center gap-5 group hover:shadow-xl transition-all duration-500">
+                    <div key={i} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5 group hover:shadow-xl transition-all duration-500">
                         <div className="w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500" style={{ backgroundColor: stat.bg, color: stat.color }}>
                             <stat.icon size={32} />
                         </div>
@@ -98,7 +98,7 @@ export const ReportsPage: React.FC = () => {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Students per Class Chart */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-10">
                         <h3 className="text-xl font-black text-[#414042] flex items-center gap-3">
                             <Users className="text-[#00ADEF] w-6 h-6" />
@@ -123,7 +123,7 @@ export const ReportsPage: React.FC = () => {
                 </div>
 
                 {/* Attendance Trend Line Chart */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-10">
                         <h3 className="text-xl font-black text-[#414042] flex items-center gap-3">
                             <TrendingUp className="text-[#D9DF21] w-6 h-6" />
@@ -158,7 +158,7 @@ export const ReportsPage: React.FC = () => {
             </div>
 
             {/* Recent History Table */}
-            <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
                     <h3 className="text-xl font-black text-[#414042]">Histororial de Consultas</h3>
                     <button className="text-[#00ADEF] text-xs font-black uppercase tracking-widest hover:underline">Auditoría Completa</button>
@@ -166,12 +166,12 @@ export const ReportsPage: React.FC = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-gray-50/50">
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Recurso / Reporte</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Fecha Generación</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Generado Por</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Estado</th>
-                                <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Acciones</th>
+                            <tr className="bg-gray-50/80 border-b border-gray-100">
+                                <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Recurso / Reporte</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Fecha Generación</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Generado Por</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Estado</th>
+                                <th className="px-8 py-5 text-right text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">

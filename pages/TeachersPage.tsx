@@ -16,11 +16,15 @@ import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { PremiumSearch } from '../components/common/PremiumSearch';
 import { PremiumSelect } from '../components/common/PremiumSelect';
 
+import { useNavigate, Routes, Route, useParams, useLocation } from 'react-router-dom';
+
 interface TeachersPageProps {
     onDataChange?: () => void;
 }
 
 export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -28,7 +32,6 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
     const [historyDateFilter, setHistoryDateFilter] = useState('');
     const [historyClassFilter, setHistoryClassFilter] = useState('');
 
-    const [view, setView] = useState<'list' | 'form'>('list');
     const [activeTab, setActiveTab] = useState<'list' | 'attendance' | 'history'>('list');
     const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
     const [historyRecords, setHistoryRecords] = useState<AttendanceRecord[]>([]);
@@ -117,39 +120,6 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
         }
     };
 
-    const handleSaveTeacher = async (data: Partial<Teacher>) => {
-        try {
-            if (editingTeacher) {
-                await updateTeacher(editingTeacher.id, data);
-
-                // If updating the currently logged-in teacher, update their session
-                const teacherSession = localStorage.getItem('teacher_session');
-                if (teacherSession) {
-                    const currentUser = JSON.parse(teacherSession);
-                    if (currentUser.id === editingTeacher.id && data.clase) {
-                        // Update the assignedClass in session
-                        currentUser.assignedClass = data.clase;
-                        localStorage.setItem('teacher_session', JSON.stringify(currentUser));
-                        // Trigger page reload to reflect changes
-                        window.dispatchEvent(new CustomEvent('teacher-class-updated'));
-                    }
-                }
-
-                showNotification('Docente actualizado correctamente', 'success');
-            } else {
-                await addTeacher(data as Omit<Teacher, 'id' | 'created_at'>);
-                triggerSuccess('Docente registrado correctamente');
-            }
-            loadData();
-            if (onDataChange) onDataChange();
-            setView('list');
-            setEditingTeacher(null);
-        } catch (error) {
-            console.error('Error saving teacher:', error);
-            showNotification('Error al guardar el docente', 'error');
-        }
-    };
-
     const handleDeleteClick = (id: string) => {
         setTeacherToDelete(id);
         setDeleteModalOpen(true);
@@ -172,36 +142,119 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
         }
     };
 
-    const filteredTeachers = teachers.filter(t => {
+    const handleSaveTeacher = async (data: Partial<Teacher>) => {
+        try {
+            if (editingTeacher) {
+                await updateTeacher(editingTeacher.id, data);
+                showNotification('Docente actualizado correctamente', 'success');
+            } else {
+                await addTeacher(data as Omit<Teacher, 'id' | 'created_at'>);
+                triggerSuccess('Docente registrado correctamente');
+            }
+            loadData();
+            if (onDataChange) onDataChange();
+            navigate('/admin/docentes');
+            setEditingTeacher(null);
+        } catch (error) {
+            console.error('Error saving teacher:', error);
+            showNotification('Error al guardar el docente', 'error');
+        }
+    };
+
+    // Main Component Logic wrapper
+    return (
+        <Routes>
+            <Route path="/" element={
+                <TeachersListView
+                    teachers={teachers}
+                    loading={loading}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    roleFilter={roleFilter}
+                    setRoleFilter={setRoleFilter}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    onEdit={(t) => {
+                        setEditingTeacher(t);
+                        navigate(`/admin/docentes/edit/${t.id}`, { state: { from: location.pathname } });
+                    }}
+                    onDelete={handleDeleteClick}
+                    onNew={() => {
+                        setEditingTeacher(null);
+                        navigate('/admin/docentes/new', { state: { from: location.pathname } });
+                    }}
+                    attendanceRecords={attendanceRecords}
+                    historyRecords={historyRecords}
+                    historyDateFilter={historyDateFilter}
+                    setHistoryDateFilter={setHistoryDateFilter}
+                    historyClassFilter={historyClassFilter}
+                    setHistoryClassFilter={setHistoryClassFilter}
+                    uniqueClasses={uniqueClasses}
+                    deleteModalOpen={deleteModalOpen}
+                    setDeleteModalOpen={setDeleteModalOpen}
+                    confirmDelete={confirmDelete}
+                />
+            } />
+            <Route path="/new" element={
+                <TeacherForm
+                    onClose={() => navigate(-1)}
+                    onSave={handleSaveTeacher}
+                    editingTeacher={null}
+                />
+            } />
+            <Route path="/edit/:id" element={
+                <TeacherFormEditWrapper
+                    teachers={teachers}
+                    onClose={() => navigate(-1)}
+                    onSave={handleSaveTeacher}
+                />
+            } />
+        </Routes>
+    );
+};
+
+// Sub-components to keep TeachersPage clean and support routing
+const TeacherFormEditWrapper: React.FC<{ teachers: Teacher[], onClose: () => void, onSave: (data: Partial<Teacher>) => void }> = ({ teachers, onClose, onSave }) => {
+    const { id } = useParams();
+    const teacher = teachers.find(t => t.id === id);
+
+    if (!teacher) return null;
+
+    return (
+        <TeacherForm
+            onClose={onClose}
+            onSave={onSave}
+            editingTeacher={teacher}
+        />
+    );
+};
+
+const TeachersListView: React.FC<any> = ({
+    teachers, loading, searchTerm, setSearchTerm, roleFilter, setRoleFilter,
+    activeTab, setActiveTab, onEdit, onDelete, onNew,
+    attendanceRecords, historyRecords, historyDateFilter, setHistoryDateFilter,
+    historyClassFilter, setHistoryClassFilter, uniqueClasses,
+    deleteModalOpen, setDeleteModalOpen, confirmDelete
+}) => {
+    // Re-implemented filtered logic
+    const filteredTeachers = teachers.filter((t: any) => {
         const matchesSearch = (t.nombre + ' ' + t.apellido).toLowerCase().includes(searchTerm.toLowerCase());
         const matchesRole = roleFilter ? t.rol === roleFilter : true;
         return matchesSearch && matchesRole;
     });
 
-    const filteredAttendance = attendanceRecords.filter(r =>
+    const filteredAttendance = attendanceRecords.filter((r: any) =>
         r.docente_nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         r.clase?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const filteredHistory = historyRecords.filter(r => {
+    const filteredHistory = historyRecords.filter((r: any) => {
         const matchesSearch = r.docente_nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             r.clase?.toLowerCase().includes(searchTerm.toLowerCase());
-
         const matchesDate = historyDateFilter ? r.fecha === historyDateFilter : true;
         const matchesClass = historyClassFilter ? r.clase === historyClassFilter : true;
-
         return matchesSearch && matchesDate && matchesClass;
     });
-
-    if (view === 'form') {
-        return (
-            <TeacherForm
-                onClose={() => setView('list')}
-                onSave={handleSaveTeacher}
-                editingTeacher={editingTeacher}
-            />
-        );
-    }
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -212,10 +265,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
                     <p className="text-gray-500 font-medium mt-1 uppercase tracking-wider text-[10px] sm:text-xs">Administración • Gestión de Profesores</p>
                 </div>
                 <button
-                    onClick={() => {
-                        setEditingTeacher(null);
-                        setView('form');
-                    }}
+                    onClick={onNew}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#D9DF21] text-[#414042] px-8 py-3.5 rounded-2xl hover:bg-[#C4CB1D] transition-all shadow-lg shadow-yellow-500/10 font-bold text-sm active:scale-95"
                 >
                     <Plus className="w-5 h-5" />
@@ -224,9 +274,9 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
             </div>
 
             {/* Unified Navigation and Filters Bar */}
-            <div className="bg-white p-2 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col lg:flex-row items-center gap-4 w-full overflow-hidden">
+            <div className="bg-white p-2 rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 flex flex-col lg:flex-row items-center gap-4 w-full overflow-hidden">
                 {/* Tabs - Scrollable on mobile if needed */}
-                <div className="flex bg-gray-50 p-1.5 rounded-3xl sm:rounded-[1.8rem] gap-1 shrink-0 w-full lg:w-auto overflow-x-auto no-scrollbar">
+                <div className="flex bg-gray-50 p-1.5 rounded-2xl sm:rounded-3xl gap-1 shrink-0 w-full lg:w-auto overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab('list')}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-bold text-xs transition-all duration-300 ${activeTab === 'list'
@@ -326,7 +376,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
             {activeTab === 'list' ? (
                 <>
                     {/* Teachers Table */}
-                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                         {loading ? (
                             <div className="p-20 text-center">
                                 <div className="w-16 h-16 border-4 border-gray-100 border-t-[#00ADEF] rounded-full animate-spin mx-auto mb-4"></div>
@@ -336,17 +386,17 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="bg-gray-50/50">
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Docente</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Especialidad</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Contacto</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Estado</th>
-                                            <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Acciones</th>
+                                        <tr className="bg-gray-50/80 border-b border-gray-100">
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Docente</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Especialidad</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Contacto</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Estado</th>
+                                            <th className="px-8 py-5 text-right text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Acciones</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-50">
+                                    <tbody className="divide-y divide-gray-100">
                                         {filteredTeachers.map((teacher) => (
-                                            <tr key={teacher.id} className="hover:bg-blue-50/30 transition-colors group">
+                                            <tr key={teacher.id} className="hover:bg-blue-50/50 transition-all group relative border-l-4 border-transparent hover:border-[#7C3AED]">
                                                 <td className="px-8 py-6">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-blue-500/10 border-2 border-white">
@@ -395,9 +445,9 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
                                                 <td className="px-8 py-6 text-right">
                                                     <div className="flex justify-end gap-2">
                                                         <button
-                                                            onClick={() => {
-                                                                setEditingTeacher(teacher);
-                                                                setView('form');
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onEdit(teacher);
                                                             }}
                                                             className="w-10 h-10 flex items-center justify-center bg-gray-50 hover:bg-[#7C3AED] hover:text-white rounded-xl transition-all text-[#7C3AED] shadow-sm hover:shadow-lg hover:shadow-purple-500/20"
                                                             title="Editar registro"
@@ -405,7 +455,10 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
                                                             <Edit className="w-4 h-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDeleteClick(teacher.id)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onDelete(teacher.id);
+                                                            }}
                                                             className="w-10 h-10 flex items-center justify-center bg-gray-50 hover:bg-[#BE1E2D] hover:text-white rounded-xl transition-all text-[#BE1E2D] shadow-sm hover:shadow-lg hover:shadow-red-500/20"
                                                             title="Eliminar registro"
                                                         >
@@ -432,8 +485,8 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
             ) : activeTab === 'attendance' ? (
                 /* Attendance Real-time Section */
                 <div className="space-y-6">
-                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 flex justify-between items-center">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
                             <div>
                                 <h3 className="text-2xl font-black text-[#414042]">Registro de Hoy</h3>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Sincronización en tiempo real activa</p>
@@ -451,16 +504,16 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="bg-gray-50/50">
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Docente</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Clase/Especialidad</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Hora de Ingreso</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Fecha</th>
+                                        <tr className="bg-gray-50/80 border-b border-gray-100">
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Docente</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Clase/Especialidad</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Hora de Ingreso</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Fecha</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-50">
+                                    <tbody className="divide-y divide-gray-100">
                                         {filteredAttendance.map((record) => (
-                                            <tr key={record.id} className="hover:bg-blue-50/30 transition-colors group animate-fade-in">
+                                            <tr key={record.id} className="hover:bg-blue-50/50 transition-all group animate-fade-in relative border-l-4 border-transparent hover:border-[#00ADEF]">
                                                 <td className="px-8 py-6">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-10 h-10 rounded-xl bg-[#00ADEF]/10 text-[#00ADEF] flex items-center justify-center font-black text-xs">
@@ -504,8 +557,8 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
             ) : (
                 /* Attendance History Section */
                 <div className="space-y-6">
-                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-8 border-b border-gray-100 bg-gray-50/30">
                             <h3 className="text-2xl font-black text-[#414042]">Historial de Asistencia</h3>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Registros completos históricos</p>
                         </div>
@@ -514,16 +567,16 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="bg-gray-50/50">
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Docente</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Clase/Especialidad</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Hora</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Fecha</th>
+                                        <tr className="bg-gray-50/80 border-b border-gray-100">
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Docente</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Clase/Especialidad</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Hora</th>
+                                            <th className="px-8 py-5 text-[10px] font-black text-[#414042] uppercase tracking-[0.2em]">Fecha</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-50">
+                                    <tbody className="divide-y divide-gray-100">
                                         {filteredHistory.map((record) => (
-                                            <tr key={record.id} className="hover:bg-gray-50/50 transition-colors group">
+                                            <tr key={record.id} className="hover:bg-gray-50 transition-all group relative border-l-4 border-transparent hover:border-gray-200">
                                                 <td className="px-8 py-6">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-400 flex items-center justify-center font-black text-xs">
@@ -562,6 +615,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ onDataChange }) => {
                     </div>
                 </div>
             )}
+
 
             <ConfirmModal
                 isOpen={deleteModalOpen}

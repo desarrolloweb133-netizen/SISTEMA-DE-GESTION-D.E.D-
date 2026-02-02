@@ -37,8 +37,8 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const activePath = location.pathname.split('/')[2] || 'dashboard';
-  const activeView = activePath === 'classes' ? 'dashboard' : activePath;
+  const activePath = location.pathname.split('/')[2] || 'inicio';
+  const activeView = activePath === 'clases' ? 'inicio' : activePath;
   const { showNotification } = useNotification();
 
   // Check session on mount
@@ -80,7 +80,7 @@ export default function App() {
   const handleLogin = async (loginUser: User) => {
     setUser(loginUser);
     if (loginUser.role === 'admin') {
-      navigate('/admin/dashboard');
+      navigate('/admin/inicio');
     } else {
       navigate('/teacher/dashboard');
     }
@@ -91,7 +91,7 @@ export default function App() {
   };
 
   const handleClassClick = (classId: string) => {
-    navigate(`/admin/classes/${classId}`);
+    navigate(`/admin/clases/${classId}`);
   };
 
   const handleCreateClass = async (classData: Partial<ClassEntity>) => {
@@ -132,21 +132,22 @@ export default function App() {
     <Routes>
       <Route path="/check-in" element={<CheckInPage />} />
       <Route path="/login" element={
-        user ? <Navigate to={user.role === 'admin' ? "/admin/dashboard" : "/teacher/dashboard"} /> : <LoginForm onLoginSuccess={handleLogin} onCancel={() => { }} />
+        user ? <Navigate to={user.role === 'admin' ? "/admin/inicio" : "/teacher/dashboard"} /> : <LoginForm onLoginSuccess={handleLogin} onCancel={() => { }} />
       } />
 
       {/* Teacher Portal Routes */}
       <Route path="/teacher/*" element={
         !user ? <Navigate to="/login" /> : (
-          user.role === 'admin' ? <Navigate to="/admin/dashboard" /> :
+          user.role === 'admin' ? <Navigate to="/admin/inicio" /> :
             <TeacherLayout user={user} onLogout={handleLogout}>
               <Routes>
-                <Route path="/" element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<TeacherDashboard user={user} />} />
+                <Route path="/" element={<Navigate to="/admin/inicio" replace />} />
+                <Route path="dashboard" element={<Navigate to="/admin/inicio" replace />} />
+                <Route path="inicio" element={<TeacherDashboard user={user} />} />
                 <Route path="class-manager" element={<ClassManager user={user} />} />
                 <Route path="reports" element={<TeacherReportsPage />} />
                 <Route path="activities" element={<TeacherActivitiesPage user={user} />} />
-                <Route path="*" element={<Navigate to="dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/admin/inicio" replace />} />
               </Routes>
             </TeacherLayout>
         )
@@ -159,14 +160,12 @@ export default function App() {
             <Layout
               user={user}
               onLogout={handleLogout}
-              activeView={activeView}
-              onNavigate={handleNavigate}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
             >
               <Routes>
-                <Route path="/" element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={
+                <Route path="/" element={<Navigate to="/admin/inicio" replace />} />
+                <Route path="inicio" element={
                   <Dashboard
                     classes={classes}
                     stats={stats}
@@ -177,21 +176,25 @@ export default function App() {
                     onSearchChange={setSearchQuery}
                   />
                 } />
-                <Route path="classes/:id" element={<ClassDetailPage key={location.pathname} onDataChange={loadData} />} />
-                <Route path="students" element={<StudentsPage onDataChange={loadData} />} />
-                <Route path="teachers" element={<TeachersPage onDataChange={loadData} />} />
-                <Route path="attendance" element={<AttendanceAdminPage />} />
-                <Route path="reports" element={<ReportsPage />} />
-                <Route path="calendar" element={<CalendarPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="*" element={<Navigate to="dashboard" replace />} />
+                <Route path="clases/:id" element={<ClassDetailPage key={location.pathname} onDataChange={loadData} />} />
+                <Route path="alumnos/*" element={<StudentsPage onDataChange={loadData} />} />
+                <Route path="docentes/*" element={<TeachersPage onDataChange={loadData} />} />
+                <Route path="asistencia" element={<AttendanceAdminPage />} />
+                <Route path="reportes" element={<ReportsPage />} />
+                <Route path="calendario" element={<CalendarPage />} />
+                <Route path="config" element={<SettingsPage />} />
+                <Route path="*" element={<Navigate to="/admin/inicio" replace />} />
               </Routes>
             </Layout>
         )
       } />
 
-      <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? "/admin/dashboard" : "/teacher/dashboard") : "/admin/dashboard"} replace />} />
-      <Route path="*" element={<Navigate to={user ? (user.role === 'admin' ? "/admin/dashboard" : "/teacher/dashboard") : "/admin/dashboard"} replace />} />
+      <Route path="/" element={
+        user ? (
+          user.role === 'admin' ? <Navigate to="/admin/inicio" /> : <Navigate to="/teacher/dashboard" />
+        ) : <Navigate to="/login" />
+      } />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
