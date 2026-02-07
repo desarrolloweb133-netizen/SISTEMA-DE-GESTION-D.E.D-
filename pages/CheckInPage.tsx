@@ -37,43 +37,74 @@ export const CheckInPage: React.FC = () => {
     const startScanning = async () => {
         if (isScanningRef.current) return;
 
+        // Verificar soporte de cámara y contexto seguro
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setError("El navegador no soporta acceso a cámara o la conexión no es segura (requiere HTTPS).");
+            setStatus('error');
+            return;
+        }
+
         try {
             const html5QrCode = new Html5Qrcode("reader");
             html5QrCodeRef.current = html5QrCode;
-            isScanningRef.current = true;
 
             const config = {
                 fps: 20,
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                     const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                    const size = Math.floor(minEdge * 0.85); // 85% del área para mayor rango
+                    const size = Math.floor(minEdge * 0.85);
                     return { width: size, height: size };
                 },
-                aspectRatio: 1.0
+                aspectRatio: undefined
             };
 
-            await html5QrCode.start(
-                { facingMode: "user" }, // Priorizar cámara frontal para terminales
-                config,
-                onScanSuccess,
-                () => { } // Ignorar fallos silenciosos
-            );
-
-            setInstruction('Escaneando código...');
-        } catch (err) {
-            console.error("No se pudo iniciar la cámara automáticamente:", err);
-            // Intentar con cualquier cámara disponible si la frontal falla
-            try {
-                await html5QrCodeRef.current?.start(
-                    { facingMode: "environment" },
-                    { fps: 15, qrbox: { width: 280, height: 280 } },
+            const startCamera = async (mode: any) => {
+                await html5QrCode.start(
+                    mode,
+                    config,
                     onScanSuccess,
                     () => { }
                 );
-            } catch (retryErr) {
-                setError("No se pudo acceder a la cámara. Revisa los permisos.");
-                setStatus('error');
+                isScanningRef.current = true;
+                setInstruction('Escaneando código...');
+            };
+
+            // Estrategia de reintentos en cascada
+            try {
+                // Intento 1: Cámara frontal (User)
+                await startCamera({ facingMode: "user" });
+            } catch (err1) {
+                console.warn("Fallo cámara frontal, intentando trasera...", err1);
+                try {
+                    // Intento 2: Cámara trasera (Environment)
+                    await startCamera({ facingMode: "environment" });
+                } catch (err2) {
+                    console.warn("Fallo cámara trasera, intentando cualquier cámara...", err2);
+                    try {
+                        // Intento 3: Cualquier cámara disponible (sin restricciones)
+                        await startCamera({ facingMode: undefined });
+                    } catch (err3) {
+                        // Último recurso: Obtener ID de cámara explícita
+                        const devices = await Html5Qrcode.getCameras();
+                        if (devices && devices.length) {
+                            await startCamera(devices[0].id);
+                        } else {
+                            throw err3;
+                        }
+                    }
+                }
             }
+
+        } catch (err) {
+            console.error("Error fatal de cámara:", err);
+            let msg = "No se pudo acceder a la cámara.";
+            if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                msg = "Acceso a cámara bloqueado. Usa HTTPS o localhost.";
+            } else {
+                msg = "Revisa permisos del navegador o cierra otras apps usando la cámara.";
+            }
+            setError(msg);
+            setStatus('error');
         }
     };
 
@@ -310,7 +341,7 @@ export const CheckInPage: React.FC = () => {
                         </div>
 
                         <div className="flex-1 relative bg-white p-3 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl border-2 border-white overflow-hidden group">
-                            <div id="reader" className="w-full h-full bg-slate-900 overflow-hidden rounded-[2.2rem] md:rounded-[3.2rem]"></div>
+                            <div id="reader" className="w-full h-full bg-slate-900 overflow-hidden rounded-[2.2rem] md:rounded-[3.2rem] relative"></div>
 
                             {/* Professional Scan UI */}
                             <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center p-4">
@@ -357,10 +388,17 @@ export const CheckInPage: React.FC = () => {
                                     object-fit: cover !important;
                                     width: 100% !important;
                                     height: 100% !important;
-                                    border-radius: 3.5rem !important;
+                                    border-radius: 2rem !important;
+                                    position: absolute !important;
+                                    top: 0 !important;
+                                    left: 0 !important;
+                                    z-index: 10 !important;
                                 }
                                 #reader__dashboard { display: none !important; }
-                                #reader { border: none !important; }
+                                #reader { 
+                                    border: none !important; 
+                                    position: relative !important;
+                                }
                                 .animate-scan-vertical {
                                     animation: scan-vertical 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
                                 }

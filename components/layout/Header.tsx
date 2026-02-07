@@ -38,7 +38,10 @@ export const Header: React.FC<HeaderProps> = ({
                     <div className="w-9 h-9 bg-white rounded-xl shadow-md flex items-center justify-center p-1">
                         <img src={GET_DED_LOGO()} alt="Logo" className="w-full h-auto" />
                     </div>
-                    <h1 className="text-xl font-extrabold text-[#414042] hidden sm:block">PEDERCENT</h1>
+                    <div className="hidden sm:block">
+                        <h1 className="text-lg font-extrabold text-[#414042] leading-none">DED PEDERCENT</h1>
+                        <p className="text-[9px] font-bold text-[#00ADEF] uppercase tracking-wider mt-0.5">Departamento de Escuela Dominical</p>
+                    </div>
                 </div>
 
                 {activeView === 'inicio' && (
