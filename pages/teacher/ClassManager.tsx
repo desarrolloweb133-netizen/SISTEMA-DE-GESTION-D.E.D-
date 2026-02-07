@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNotification } from '../../context/NotificationContext';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { User, Student, ClassEntity, StudentAttendance, CalendarEvent } from '../../types';
 import { supabase, createNotification, getTodaySessions } from '../../services/supabaseClient';
 import { Search, Save, CheckCircle, XCircle, Clock, AlertCircle, Eye, Calendar, User as UserIcon, ArrowLeft, Phone, Mail, FileText, ChevronRight } from 'lucide-react';
-import { getStudents, getClasses } from '../../services/supabaseClient';
+import { getStudents, getClasses, addStudent } from '../../services/supabaseClient';
 import { PremiumSearch } from '../../components/common/PremiumSearch';
+import { StudentForm } from '../../components/dashboard/StudentForm';
 import { differenceInYears, parseISO } from 'date-fns';
 
 const calculateAge = (birthDate: string | undefined) => {
@@ -18,6 +20,8 @@ const calculateAge = (birthDate: string | undefined) => {
 };
 
 export const ClassManager: React.FC<{ user: User }> = ({ user }) => {
+    const { showNotification } = useNotification();
+
     const [loading, setLoading] = useState(true);
     const [students, setStudents] = useState<Student[]>([]);
     const [myClass, setMyClass] = useState<ClassEntity | null>(null);
@@ -26,7 +30,7 @@ export const ClassManager: React.FC<{ user: User }> = ({ user }) => {
     const [saving, setSaving] = useState(false);
     const [savedSuccess, setSavedSuccess] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-    const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'detail' | 'form'>('list');
     const [teacherData, setTeacherData] = useState<any>(null);
     const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
     const [registrationMode, setRegistrationMode] = useState(false);
@@ -129,6 +133,41 @@ export const ClassManager: React.FC<{ user: User }> = ({ user }) => {
         s.apellido.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleSaveStudent = async (studentData: Partial<Student>) => {
+        if (!myClass || !teacherData) return;
+        try {
+            setLoading(true);
+            // 1. Create Student
+            const newStudent = await addStudent({
+                ...studentData,
+                clase_id: myClass.id,
+                estado: 'activo'
+            } as any);
+
+            // 2. Create Notification for Admin
+            await createNotification({
+                tipo: 'alumno_creado',
+                docente_id: teacherData.id,
+                docente_nombre: `${teacherData.nombre} ${teacherData.apellido}`,
+                alumno_id: newStudent.id,
+                alumno_nombre: `${newStudent.nombre} ${newStudent.apellido}`,
+                detalles: {
+                    classId: myClass.id,
+                    className: myClass.nombre
+                }
+            } as any);
+
+            showNotification('Alumno inscrito correctamente', 'success');
+            setViewMode('list');
+            loadData(); // Refresh list
+        } catch (error) {
+            console.error('Error saving student:', error);
+            showNotification('Error al inscribir alumno', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) return <div className="p-8 text-center text-gray-500 font-bold">Cargando tu clase...</div>;
 
     if (!myClass) return (
@@ -192,6 +231,18 @@ export const ClassManager: React.FC<{ user: User }> = ({ user }) => {
 
         doc.save(`Asistencia_${myClass.nombre}_${today}.pdf`);
     };
+
+    // --- RENDER FORM VIEW ---
+    if (viewMode === 'form') {
+        return (
+            <StudentForm
+                onClose={() => setViewMode('list')}
+                onSave={handleSaveStudent}
+                editingStudent={null} // Teachers only create for now
+                initialClassId={myClass.id}
+            />
+        );
+    }
 
     // --- RENDER DETAIL VIEW ---
     if (viewMode === 'detail' && selectedStudent) {
@@ -460,6 +511,13 @@ export const ClassManager: React.FC<{ user: User }> = ({ user }) => {
                         >
                             <FileText size={16} />
                             Reporte PDF
+                        </button>
+                        <button
+                            onClick={() => setViewMode('form')}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#00ADEF] text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md hover:bg-[#0090C1]"
+                        >
+                            <UserIcon size={16} />
+                            Inscribir Alumno
                         </button>
                     </div>
                     <div className="w-full md:w-80">

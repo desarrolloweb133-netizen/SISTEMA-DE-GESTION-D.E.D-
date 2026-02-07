@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     ArrowLeft, Users, Calendar, BarChart2, Settings,
     Plus, Search, Mail, Phone, MoreVertical, Save, User
@@ -35,6 +35,24 @@ export const ClassDetailPage: React.FC<ClassDetailPageProps> = ({ onDataChange }
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceStatus>>({});
     const [savingAttendance, setSavingAttendance] = useState(false);
+    const location = useLocation();
+    const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const highlight = params.get('highlight');
+        if (highlight && students.length > 0) {
+            setHighlightedStudentId(highlight);
+            setTimeout(() => {
+                const element = document.getElementById(`student-${highlight}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                // Clear highlight after 5 seconds
+                setTimeout(() => setHighlightedStudentId(null), 5000);
+            }, 500);
+        }
+    }, [location.search, students]);
 
     useEffect(() => {
         if (id) {
@@ -248,7 +266,11 @@ export const ClassDetailPage: React.FC<ClassDetailPageProps> = ({ onDataChange }
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
                                         {students.map((student) => (
-                                            <tr key={student.id} className="hover:bg-blue-50/30 transition-all group">
+                                            <tr
+                                                key={student.id}
+                                                id={`student-${student.id}`}
+                                                className={`hover:bg-blue-50/30 transition-all group ${highlightedStudentId === student.id ? 'bg-[#D9DF21]/20 animate-pulse border-l-4 border-[#D9DF21]' : ''}`}
+                                            >
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-12 h-12 rounded-2xl bg-gray-100 overflow-hidden shadow-sm group-hover:bg-[#00ADEF] group-hover:text-white transition-all duration-300 flex items-center justify-center">

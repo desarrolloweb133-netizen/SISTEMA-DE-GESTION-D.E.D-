@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, LogOut, GraduationCap, ChevronLeft, Menu, FileText } from 'lucide-react';
 import { User } from '../../types';
@@ -14,6 +14,11 @@ export const TeacherLayout: React.FC<TeacherLayoutProps> = ({ user, onLogout, ch
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const handleLogout = () => {
         setShowLogoutConfirm(true);
@@ -27,87 +32,90 @@ export const TeacherLayout: React.FC<TeacherLayoutProps> = ({ user, onLogout, ch
     return (
         <div className="min-h-screen bg-gray-50 flex font-santander">
             {/* Sidebar - Desktop */}
-            <aside className={`fixed inset-y-0 left-0 z-50 bg-[#00ADEF] border-r border-white/10 transition-all duration-300 lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${collapsed ? 'w-20' : 'w-64'}`}>
-                <div className="h-full flex flex-col p-6">
+            {/* Sidebar - Desktop */}
+            {/* Sidebar - Desktop */}
+            <aside
+                className={`fixed inset-y-0 left-0 z-50 bg-[#00ADEF] border-r border-white/10 transition-all duration-300 ease-in-out lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${collapsed ? 'w-20' : 'w-64'}`}
+            >
+                <div className="h-full flex flex-col bg-[#00ADEF] overflow-hidden">
                     {/* Logo */}
-                    <div className={`flex items-center gap-3 mb-10 px-2 ${collapsed ? 'justify-center' : ''}`}>
-                        {!collapsed ? (
-                            <>
-                                <div className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center flex-shrink-0 p-1">
-                                    <img src={GET_DED_LOGO()} alt="Logo" className="w-full h-auto" />
-                                </div>
-                                <div>
-                                    <h1 className="text-lg font-black tracking-tight text-white leading-none">DED</h1>
-                                    <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Portal Docente</p>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center p-1">
-                                <img src={GET_DED_LOGO()} alt="Logo" className="w-full h-auto" />
-                            </div>
-                        )}
+                    <div className={`p-4 border-b border-white/10 flex items-center h-[73px] transition-all duration-300 ${collapsed ? 'justify-center' : 'justify-start gap-3'}`}>
+                        <div className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center flex-shrink-0 p-1">
+                            <img src={GET_DED_LOGO()} alt="Logo" className="w-full h-auto" />
+                        </div>
+                        <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                            <h1 className="text-xl font-extrabold text-white leading-tight">DED</h1>
+                            <p className="text-[10px] font-bold text-white/90 uppercase tracking-widest">Portal Docente</p>
+                        </div>
                     </div>
 
                     {/* Navigation */}
-                    <nav className="space-y-2 flex-1">
+                    <nav className="flex-1 py-3 overflow-y-auto px-3 space-y-0.5">
                         <NavLink
-                            to="/teacher/dashboard"
-                            className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${isActive ? 'bg-[#D9DF21] text-[#414042]' : 'text-white/80 hover:bg-white/10 hover:text-white'} ${collapsed ? 'justify-center px-0' : ''}`}
+                            to="/teacher/inicio"
+                            className={({ isActive }) => `w-full flex items-center h-[46px] rounded-xl transition-all duration-300 group ${isActive ? 'bg-[#D9DF21] text-[#414042] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'} ${collapsed ? 'justify-center px-0' : 'justify-start px-4 gap-4'}`}
                             onClick={() => setMobileMenuOpen(false)}
                             title={collapsed ? 'Dashboard' : ''}
                         >
-                            <LayoutDashboard size={18} />
-                            {!collapsed && 'Dashboard'}
+                            <LayoutDashboard className={`w-5 h-5 min-w-[20px] flex-shrink-0 transition-all duration-300`} />
+                            <span className={`font-bold text-sm tracking-wide transition-all duration-300 whitespace-nowrap overflow-hidden ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                                Dashboard
+                            </span>
                         </NavLink>
                         <NavLink
                             to="/teacher/class-manager"
-                            className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${isActive ? 'bg-[#D9DF21] text-[#414042]' : 'text-white/80 hover:bg-white/10 hover:text-white'} ${collapsed ? 'justify-center px-0' : ''}`}
+                            className={({ isActive }) => `w-full flex items-center h-[46px] rounded-xl transition-all duration-300 group ${isActive ? 'bg-[#D9DF21] text-[#414042] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'} ${collapsed ? 'justify-center px-0' : 'justify-start px-4 gap-4'}`}
                             onClick={() => setMobileMenuOpen(false)}
                             title={collapsed ? 'Alumnos' : ''}
                         >
-                            <Users size={18} />
-                            {!collapsed && 'Alumnos'}
+                            <Users className={`w-5 h-5 min-w-[20px] flex-shrink-0 transition-all duration-300`} />
+                            <span className={`font-bold text-sm tracking-wide transition-all duration-300 whitespace-nowrap overflow-hidden ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                                Alumnos
+                            </span>
                         </NavLink>
                         <NavLink
                             to="/teacher/reports"
-                            className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${isActive ? 'bg-[#D9DF21] text-[#414042]' : 'text-white/80 hover:bg-white/10 hover:text-white'} ${collapsed ? 'justify-center px-0' : ''}`}
+                            className={({ isActive }) => `w-full flex items-center h-[46px] rounded-xl transition-all duration-300 group ${isActive ? 'bg-[#D9DF21] text-[#414042] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'} ${collapsed ? 'justify-center px-0' : 'justify-start px-4 gap-4'}`}
                             onClick={() => setMobileMenuOpen(false)}
                             title={collapsed ? 'Reportes' : ''}
                         >
-                            <FileText size={18} />
-                            {!collapsed && 'Reportes'}
+                            <FileText className={`w-5 h-5 min-w-[20px] flex-shrink-0 transition-all duration-300`} />
+                            <span className={`font-bold text-sm tracking-wide transition-all duration-300 whitespace-nowrap overflow-hidden ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                                Reportes
+                            </span>
                         </NavLink>
                     </nav>
 
                     {/* User & Logout */}
-                    <div className="pt-6 border-t border-white/10">
-                        {!collapsed && (
-                            <div className="flex items-center gap-3 mb-4 px-2">
-                                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-white/30">
-                                    <span className="text-sm font-black text-white">
-                                        {user.email?.substring(0, 2).toUpperCase()}
-                                    </span>
-                                </div>
-                                <div className="overflow-hidden flex-1">
-                                    <p className="text-sm font-bold text-white truncate">{user.email}</p>
-                                    <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest">Docente</p>
-                                </div>
+                    <div className="mt-auto space-y-1 p-3">
+                        <div className={`flex items-center gap-3 mb-2 px-2 transition-all duration-300 rounded-xl hover:bg-white/5 py-2 ${collapsed ? 'justify-center' : ''}`}>
+                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-white/30 flex-shrink-0">
+                                <span className="text-xs font-black text-white">
+                                    {user.email?.substring(0, 2).toUpperCase()}
+                                </span>
                             </div>
-                        )}
+                            <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                                <p className="text-xs font-bold text-white truncate max-w-[140px]">{user.email}</p>
+                                <p className="text-[9px] text-white/60 font-bold uppercase tracking-widest">Docente</p>
+                            </div>
+                        </div>
+
                         <button
                             onClick={handleLogout}
-                            className={`w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-red-500/20 text-white hover:text-white rounded-xl transition-all font-bold text-xs ${collapsed ? 'px-0' : ''}`}
+                            className={`w-full flex items-center transition-all duration-300 text-white/80 hover:bg-red-500/20 hover:text-white rounded-xl h-[46px] ${collapsed ? 'justify-center px-0' : 'justify-start px-4 gap-4'}`}
                             title={collapsed ? 'Cerrar Sesión' : ''}
                         >
-                            <LogOut size={14} />
-                            {!collapsed && 'Cerrar Sesión'}
+                            <LogOut className={`w-5 h-5 min-w-[20px] flex-shrink-0 transition-all duration-300`} />
+                            <span className={`font-bold text-sm tracking-wide transition-all duration-300 whitespace-nowrap overflow-hidden ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                                Cerrar Sesión
+                            </span>
                         </button>
 
                         {/* Collapse Toggle (Desktop) */}
-                        <div className="hidden lg:block pt-3 border-t border-white/10 mt-3">
+                        <div className="hidden lg:block pt-1 border-t border-white/10 mt-1">
                             <button
                                 onClick={() => setCollapsed(!collapsed)}
-                                className={`w-full flex items-center justify-center gap-3 p-2.5 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all border border-transparent hover:border-white/20 ${collapsed ? 'px-0' : ''}`}
+                                className={`w-full flex items-center transition-all duration-300 rounded-xl h-[46px] text-white/70 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20 ${collapsed ? 'justify-center px-0' : 'justify-start px-4 gap-4'}`}
                                 title={collapsed ? 'Expandir' : 'Colapsar'}
                             >
                                 {collapsed ? (
@@ -115,7 +123,9 @@ export const TeacherLayout: React.FC<TeacherLayoutProps> = ({ user, onLogout, ch
                                 ) : (
                                     <>
                                         <ChevronLeft className="w-5 h-5 flex-shrink-0" />
-                                        <span className="text-xs font-bold uppercase tracking-widest">Colapsar</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap overflow-hidden max-w-[200px] opacity-100">
+                                            Colapsar
+                                        </span>
                                     </>
                                 )}
                             </button>
@@ -125,7 +135,9 @@ export const TeacherLayout: React.FC<TeacherLayoutProps> = ({ user, onLogout, ch
             </aside>
 
             {/* Main Content */}
-            <div className={`flex-1 transition-all duration-300 ${collapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
+            <div
+                className={`flex-1 transition-all duration-300 ease-in-out ${collapsed ? 'lg:ml-20' : 'lg:ml-64'}`}
+            >
                 {/* Mobile Header */}
                 <div className="lg:hidden h-16 bg-[#00ADEF] border-b border-white/10 flex items-center justify-between px-6 sticky top-0 z-40 shadow-md">
                     <div className="flex items-center gap-3">

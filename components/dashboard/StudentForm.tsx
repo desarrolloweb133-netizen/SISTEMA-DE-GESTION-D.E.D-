@@ -21,6 +21,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({
     const [formData, setFormData] = useState<Partial<Student>>({
         nombre: '',
         apellido: '',
+        cedula: '',
         fecha_nacimiento: '',
         clase_id: initialClassId || '',
         tutor_nombre: '',
@@ -40,6 +41,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({
             setFormData({
                 nombre: '',
                 apellido: '',
+                cedula: '',
                 fecha_nacimiento: '',
                 clase_id: initialClassId || '',
                 tutor_nombre: '',
@@ -146,6 +148,17 @@ export const StudentForm: React.FC<StudentFormProps> = ({
 
                             <div className="space-y-3">
                                 <div>
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Cédula de Identidad</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-logo-blue/20 focus:bg-white outline-none transition-all font-bold text-sm text-gray-600 placeholder:text-gray-300 shadow-inner"
+                                        placeholder="Número de cédula..."
+                                        value={formData.cedula || ''}
+                                        onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Nombre</label>
                                     <input
                                         type="text"
@@ -170,7 +183,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                                 </div>
 
                                 <div>
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Fecha de Nacimiento</label>
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Fecha de Nacimiento (Opcional)</label>
                                     <PremiumDatePicker
                                         value={formData.fecha_nacimiento || ''}
                                         onChange={(date) => setFormData({ ...formData, fecha_nacimiento: date })}

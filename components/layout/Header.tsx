@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, Bell, User, LogOut, Menu } from 'lucide-react';
 import { GET_DED_LOGO } from '../../constants/assets';
+import { NotificationPanel } from '../notifications/NotificationPanel';
 
 interface HeaderProps {
     user: { email: string; role: string } | null;
@@ -11,10 +12,17 @@ interface HeaderProps {
     onSearchChange: (value: string) => void;
     unreadNotifications?: number;
     onNotificationClick?: () => void;
+    isOpen?: boolean;
+    onClose?: () => void;
+    onUnreadCountChange?: (count: number) => void;
 }
 
 
-export const Header: React.FC<HeaderProps> = ({ user, onLogout, onOpenSidebar, activeView, searchQuery, onSearchChange, unreadNotifications = 0, onNotificationClick }) => {
+export const Header: React.FC<HeaderProps> = ({
+    user, onLogout, onOpenSidebar, activeView, searchQuery,
+    onSearchChange, unreadNotifications = 0, onNotificationClick,
+    isOpen, onClose, onUnreadCountChange
+}) => {
     return (
         <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 h-16 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-40 shadow-sm">
             {/* Left: Mobile Menu & Breadcrumbs/Search */}
@@ -52,17 +60,24 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout, onOpenSidebar, a
             {/* Right: Actions & User */}
             <div className="flex items-center gap-2 lg:gap-4">
                 {/* Notifications */}
-                <button
-                    onClick={onNotificationClick}
-                    className="hidden sm:flex relative p-2.5 hover:bg-gray-100 rounded-xl transition-colors text-gray-600"
-                >
-                    <Bell className="w-5 h-5" />
-                    {unreadNotifications > 0 && (
-                        <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] bg-[#BE1E2D] rounded-full border-2 border-white flex items-center justify-center">
-                            <span className="text-[10px] font-black text-white">{unreadNotifications > 9 ? '9+' : unreadNotifications}</span>
-                        </span>
-                    )}
-                </button>
+                <div className="relative">
+                    <button
+                        onClick={onNotificationClick}
+                        className={`hidden sm:flex relative p-2.5 rounded-xl transition-all ${unreadNotifications > 0 ? 'bg-gray-50 text-[#414042]' : 'text-gray-400 hover:bg-gray-50'
+                            }`}
+                    >
+                        <Bell className={`w-5 h-5 ${unreadNotifications > 0 ? 'fill-current' : ''}`} />
+                        {unreadNotifications > 0 && (
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-[#BE1E2D] rounded-full border-2 border-white"></span>
+                        )}
+                    </button>
+                    <NotificationPanel
+                        isOpen={!!isOpen}
+                        onClose={onClose!}
+                        unreadCount={unreadNotifications}
+                        onUnreadCountChange={onUnreadCountChange!}
+                    />
+                </div>
 
                 {/* Vertical Divider */}
                 <div className="hidden sm:block h-6 w-px bg-gray-200 mx-1"></div>

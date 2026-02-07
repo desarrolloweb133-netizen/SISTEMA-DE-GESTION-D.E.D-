@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { LogOut } from 'lucide-react';
-import { NotificationPanel } from '../notifications/NotificationPanel';
 import { getUnreadNotificationsCount } from '../../services/supabaseClient';
 
 
@@ -102,6 +101,9 @@ export const Layout: React.FC<LayoutProps> = ({
                     onSearchChange={onSearchChange}
                     unreadNotifications={unreadCount}
                     onNotificationClick={() => setShowNotificationPanel(!showNotificationPanel)}
+                    isOpen={showNotificationPanel}
+                    onClose={() => setShowNotificationPanel(false)}
+                    onUnreadCountChange={setUnreadCount}
                 />
 
 
@@ -113,13 +115,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 </main>
             </div>
 
-            {/* Notification Panel */}
-            <NotificationPanel
-                isOpen={showNotificationPanel}
-                onClose={() => setShowNotificationPanel(false)}
-                unreadCount={unreadCount}
-                onUnreadCountChange={setUnreadCount}
-            />
+            {/* Notification Panel moved to Header */}
 
             {/* Global Logout Confirmation Modal */}
 

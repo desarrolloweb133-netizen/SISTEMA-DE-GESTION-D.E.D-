@@ -82,7 +82,7 @@ export default function App() {
     if (loginUser.role === 'admin') {
       navigate('/admin/inicio');
     } else {
-      navigate('/teacher/dashboard');
+      navigate('/teacher/inicio');
     }
   };
 
@@ -132,24 +132,23 @@ export default function App() {
     <Routes>
       <Route path="/check-in" element={<CheckInPage />} />
       <Route path="/login" element={
-        user ? <Navigate to={user.role === 'admin' ? "/admin/inicio" : "/teacher/dashboard"} /> : <LoginForm onLoginSuccess={handleLogin} onCancel={() => { }} />
+        user ? <Navigate to={user.role === 'admin' ? "/admin/inicio" : "/teacher/inicio"} /> : <LoginForm onLoginSuccess={handleLogin} onCancel={() => { }} />
       } />
 
       {/* Teacher Portal Routes */}
       <Route path="/teacher/*" element={
         !user ? <Navigate to="/login" /> : (
-          user.role === 'admin' ? <Navigate to="/admin/inicio" /> :
-            <TeacherLayout user={user} onLogout={handleLogout}>
-              <Routes>
-                <Route path="/" element={<Navigate to="/admin/inicio" replace />} />
-                <Route path="dashboard" element={<Navigate to="/admin/inicio" replace />} />
-                <Route path="inicio" element={<TeacherDashboard user={user} />} />
-                <Route path="class-manager" element={<ClassManager user={user} />} />
-                <Route path="reports" element={<TeacherReportsPage />} />
-                <Route path="activities" element={<TeacherActivitiesPage user={user} />} />
-                <Route path="*" element={<Navigate to="/admin/inicio" replace />} />
-              </Routes>
-            </TeacherLayout>
+          <TeacherLayout user={user} onLogout={handleLogout}>
+            <Routes>
+              <Route path="/" element={<Navigate to="inicio" replace />} />
+              <Route path="dashboard" element={<Navigate to="inicio" replace />} />
+              <Route path="inicio" element={<TeacherDashboard user={user} />} />
+              <Route path="class-manager" element={<ClassManager user={user} />} />
+              <Route path="reports" element={<TeacherReportsPage />} />
+              <Route path="activities" element={<TeacherActivitiesPage user={user} />} />
+              <Route path="*" element={<Navigate to="inicio" replace />} />
+            </Routes>
+          </TeacherLayout>
         )
       } />
 

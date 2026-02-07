@@ -36,16 +36,27 @@ export const PremiumDatePicker: React.FC<PremiumDatePickerProps> = ({
     }, [value]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        setInputValue(val);
+        // Remove non-digit characters and limit to 8 digits
+        const raw = e.target.value.replace(/\D/g, '').slice(0, 8);
+
+        let formatted = raw;
+        if (raw.length > 4) {
+            formatted = `${raw.slice(0, 2)}/${raw.slice(2, 4)}/${raw.slice(4)}`;
+        } else if (raw.length > 2) {
+            formatted = `${raw.slice(0, 2)}/${raw.slice(2)}`;
+        }
+
+        setInputValue(formatted);
 
         // Auto-format DD/MM/YYYY logic or simple parse
-        if (val.length === 10) {
-            const parsedDate = parse(val, 'dd/MM/yyyy', new Date());
+        if (formatted.length === 10) {
+            const parsedDate = parse(formatted, 'dd/MM/yyyy', new Date());
             if (isValid(parsedDate)) {
                 onChange(format(parsedDate, 'yyyy-MM-dd'));
                 setViewDate(parsedDate);
             }
+        } else if (formatted === '') {
+            onChange('');
         }
     };
 

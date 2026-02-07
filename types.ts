@@ -49,6 +49,7 @@ export interface Student {
   id: string;
   nombre: string;
   apellido: string;
+  cedula?: string;
   fecha_nacimiento?: string;
   edad?: number;
   clase_id?: string;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, GraduationCap, Phone, Info, Trash2, Camera, UserPlus, X, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { Save, GraduationCap, Phone, Info, Trash2, Camera, UserPlus, X, AlertTriangle, Eye, EyeOff, Search, Plus } from 'lucide-react';
 import { ClassEntity, Teacher } from '../../types';
 import { getTeachers, updateTeacher, updateClass, deleteClass } from '../../services/supabaseClient';
 import { useNotification } from '../../context/NotificationContext';
@@ -34,6 +34,10 @@ export const ClassSettings: React.FC<ClassSettingsProps> = ({ classData, onUpdat
     const [isRemoveTeacherModalOpen, setIsRemoveTeacherModalOpen] = useState(false);
     const [teacherToRemove, setTeacherToRemove] = useState<string | null>(null);
 
+    // Teacher Search State
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
     useEffect(() => {
         loadTeachers();
     }, []);
@@ -63,6 +67,8 @@ export const ClassSettings: React.FC<ClassSettingsProps> = ({ classData, onUpdat
             await updateTeacher(teacherId, { clase: classData.nombre });
             showNotification('Docente asignado correctamente', 'success');
             loadTeachers();
+            // Dispatch global event to force teacher dashboard refresh if they are logged in
+            window.dispatchEvent(new Event('teacher-class-updated'));
         } catch (error) {
             console.error('Error assigning teacher:', error);
             showNotification('Error al asignar docente', 'error');
@@ -118,7 +124,8 @@ export const ClassSettings: React.FC<ClassSettingsProps> = ({ classData, onUpdat
     };
 
     const assignedTeachers = teachers.filter(t => t.clase === classData.nombre);
-    const availableTeachers = teachers.filter(t => !t.clase || t.clase === '' || t.clase === 'General');
+    // Show ALL teachers except those already in THIS class.
+    const availableTeachers = teachers.filter(t => t.clase !== classData.nombre);
 
     const colors = [
         { name: 'Púrpura', value: '#7C3AED' },
@@ -280,25 +287,90 @@ export const ClassSettings: React.FC<ClassSettingsProps> = ({ classData, onUpdat
                 </div>
 
                 <div className="p-8">
-                    {/* Add Teacher Area */}
-                    <div className="mb-8 p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                    {/* Add Teacher Area with Search */}
+                    <div className="mb-8 p-6 bg-gray-50 rounded-3xl border border-gray-100 relative">
                         <h4 className="text-sm font-black text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
                             <UserPlus size={16} />
                             Inscribir Nuevo Docente
                         </h4>
-                        <div className="flex gap-4">
-                            <select
-                                className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none font-medium text-sm text-gray-600 cursor-pointer"
-                                onChange={(e) => {
-                                    if (e.target.value) handleAssignTeacher(e.target.value);
-                                    e.target.value = '';
-                                }}
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                                className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[#00ADEF]/10 focus:border-[#00ADEF] outline-none font-bold text-sm text-gray-600 shadow-sm hover:bg-gray-50 transition-all text-left group"
                             >
-                                <option value="">Seleccionar un docente disponible...</option>
-                                {availableTeachers.map(t => (
-                                    <option key={t.id} value={t.id}>{t.nombre} {t.apellido} - {t.rol}</option>
-                                ))}
-                            </select>
+                                <span className={`group-hover:text-[#00ADEF] transition-colors ${!searchTerm && !isSearchOpen ? 'text-gray-400' : 'text-gray-700'}`}>
+                                    {isSearchOpen ? 'Buscar docente...' : 'Seleccionar docente...'}
+                                </span>
+                                <Search size={18} className="text-gray-400" />
+                            </button>
+
+                            {isSearchOpen && (
+                                <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                    <div className="p-3 border-b border-gray-50">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                            <input
+                                                type="text"
+                                                autoFocus
+                                                placeholder="Buscar por nombre o cédula..."
+                                                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00ADEF]/20 focus:border-[#00ADEF] font-bold text-gray-700 placeholder:font-medium"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="max-h-60 overflow-y-auto p-2 space-y-1">
+                                        {availableTeachers
+                                            .filter(t =>
+                                                t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                t.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                t.cedula?.includes(searchTerm)
+                                            )
+                                            .map(teacher => (
+                                                <button
+                                                    key={teacher.id}
+                                                    onClick={() => {
+                                                        handleAssignTeacher(teacher.id);
+                                                        setIsSearchOpen(false);
+                                                        setSearchTerm('');
+                                                    }}
+                                                    className="w-full flex items-center gap-3 p-2 hover:bg-purple-50 rounded-xl transition-all group text-left"
+                                                >
+                                                    <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 border border-white shadow-sm">
+                                                        {teacher.foto_url ? (
+                                                            <img src={teacher.foto_url} alt={teacher.nombre} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-gray-400">{teacher.nombre[0]}</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-extrabold text-gray-700 group-hover:text-[#00ADEF] truncate transition-colors">
+                                                            {teacher.nombre} {teacher.apellido}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-100 px-1.5 rounded-md">{teacher.rol}</span>
+                                                            {teacher.cedula && <span className="text-[10px] font-medium text-gray-400">{teacher.cedula}</span>}
+                                                            {teacher.clase && (
+                                                                <span className="text-[9px] px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-md font-black uppercase tracking-wider">
+                                                                    {teacher.clase}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-all transform scale-75 group-hover:scale-100 bg-[#00ADEF] text-white p-1.5 rounded-lg shadow-lg shadow-blue-500/30">
+                                                        <Plus size={14} strokeWidth={3} />
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        {availableTeachers.filter(t => t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || t.cedula?.includes(searchTerm)).length === 0 && (
+                                            <div className="text-center py-4 text-gray-400 text-xs font-medium">
+                                                No se encontraron resultados
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
